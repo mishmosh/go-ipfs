@@ -2,10 +2,10 @@
 package decision
 
 import (
+	"context"
 	"sync"
 	"time"
 
-	context "context"
 	blocks "github.com/ipfs/go-ipfs/blocks"
 	bstore "github.com/ipfs/go-ipfs/blocks/blockstore"
 	bsmsg "github.com/ipfs/go-ipfs/exchange/bitswap/message"
