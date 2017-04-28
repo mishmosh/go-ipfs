@@ -40,6 +40,8 @@ type Session struct {
 	notif notifications.PubSub
 
 	uuid logging.Loggable
+
+	id uint64
 }
 
 func (bs *Bitswap) NewSession(ctx context.Context) *Session {
@@ -54,6 +56,7 @@ func (bs *Bitswap) NewSession(ctx context.Context) *Session {
 		notif:         notifications.New(),
 		uuid:          loggables.Uuid("GetBlockRequest"),
 		baseTickDelay: time.Millisecond * 500,
+		id:            bs.getNextSessionID(),
 	}
 
 	cache, _ := lru.New(2048)
@@ -141,7 +144,7 @@ func (s *Session) run(ctx context.Context) {
 			}
 
 			// Broadcast these keys to everyone we're connected to
-			s.bs.wm.WantBlocks(ctx, live, nil)
+			s.bs.wm.WantBlocks(ctx, live, nil, s.id)
 
 			if len(live) > 0 {
 				go func() {
@@ -181,7 +184,7 @@ func (s *Session) wantBlocks(ctx context.Context, ks []*cid.Cid) {
 	for _, c := range ks {
 		s.liveWants[c.KeyString()] = time.Now()
 	}
-	s.bs.wm.WantBlocks(ctx, ks, s.activePeersArr)
+	s.bs.wm.WantBlocks(ctx, ks, s.activePeersArr, s.id)
 }
 
 func (s *Session) cancel(keys []*cid.Cid) {
