@@ -64,7 +64,8 @@ var unwantCmd = &cmds.Command{
 			ks = append(ks, c)
 		}
 
-		bs.CancelWants(ks)
+		// TODO: This should maybe find *all* sessions for this request and cancel them?
+		bs.CancelWants(ks, 0)
 	},
 }
 
