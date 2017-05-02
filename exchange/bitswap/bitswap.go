@@ -170,8 +170,8 @@ type Bitswap struct {
 	sessions []*Session
 	sessLk   sync.Mutex
 
-	sessId   uint64
-	sessIdLk sync.Mutex
+	sessID   uint64
+	sessIDLk sync.Mutex
 }
 
 type blockRequest struct {
@@ -277,10 +277,10 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 }
 
 func (bs *Bitswap) getNextSessionID() uint64 {
-	bs.sessIdLk.Lock()
-	defer bs.sessIdLk.Unlock()
-	bs.sessId++
-	return bs.sessId
+	bs.sessIDLk.Lock()
+	defer bs.sessIDLk.Unlock()
+	bs.sessID++
+	return bs.sessID
 }
 
 // CancelWant removes a given key from the wantlist
@@ -327,7 +327,7 @@ func (bs *Bitswap) SessionsForBlock(c *cid.Cid) []*Session {
 
 	var out []*Session
 	for _, s := range bs.sessions {
-		if s.InterestedIn(c) {
+		if s.interestedIn(c) {
 			out = append(out, s)
 		}
 	}
@@ -371,7 +371,7 @@ func (bs *Bitswap) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg
 			log.Event(ctx, "Bitswap.GetBlockRequest.End", k)
 
 			for _, ses := range bs.SessionsForBlock(k) {
-				ses.ReceiveBlock(p, b)
+				ses.receiveBlockFrom(p, b)
 				bs.CancelWants([]*cid.Cid{k}, ses.id)
 			}
 			log.Debugf("got block %s from %s", b, p)

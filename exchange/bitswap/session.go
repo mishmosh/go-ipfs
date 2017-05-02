@@ -16,6 +16,9 @@ import (
 
 const activeWantsLimit = 16
 
+// Session holds state for an individual bitswap transfer operation.
+// This allows bitswap to make smarter decisions about who to send wantlist
+// info to, and who to request blocks from
 type Session struct {
 	ctx            context.Context
 	tofetch        []*cid.Cid
@@ -44,6 +47,8 @@ type Session struct {
 	id uint64
 }
 
+// NewSession creates a new bitswap session whose lifetime is bounded by the
+// given context
 func (bs *Bitswap) NewSession(ctx context.Context) *Session {
 	s := &Session{
 		activePeers:   make(map[peer.ID]struct{}),
@@ -76,11 +81,11 @@ type blkRecv struct {
 	blk  blocks.Block
 }
 
-func (s *Session) ReceiveBlock(from peer.ID, blk blocks.Block) {
+func (s *Session) receiveBlockFrom(from peer.ID, blk blocks.Block) {
 	s.incoming <- blkRecv{from: from, blk: blk}
 }
 
-func (s *Session) InterestedIn(c *cid.Cid) bool {
+func (s *Session) interestedIn(c *cid.Cid) bool {
 	return s.interest.Contains(c.KeyString())
 }
 
@@ -137,7 +142,7 @@ func (s *Session) run(ctx context.Context) {
 
 		case <-s.tick.C:
 			var live []*cid.Cid
-			for c, _ := range s.liveWants {
+			for c := range s.liveWants {
 				cs, _ := cid.Cast([]byte(c))
 				live = append(live, cs)
 				s.liveWants[c] = time.Now()
@@ -214,11 +219,15 @@ func (s *Session) fetch(ctx context.Context, keys []*cid.Cid) {
 	}
 }
 
+// GetBlocks fetches a set of blocks within the context of this session and
+// returns a channel that found blocks will be returned on. No order is
+// guaranteed on the returned blocks.
 func (s *Session) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan blocks.Block, error) {
 	ctx = logging.ContextWithLoggable(ctx, s.uuid)
 	return getBlocksImpl(ctx, keys, s.notif, s.fetch, s.cancelWants)
 }
 
+// GetBlock fetches a single block
 func (s *Session) GetBlock(parent context.Context, k *cid.Cid) (blocks.Block, error) {
 	return getBlock(parent, k, s.GetBlocks)
 }

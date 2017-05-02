@@ -26,6 +26,7 @@ type Entry struct {
 	SesTrk map[uint64]struct{}
 }
 
+// NewRefEntry creates a new reference tracked wantlist entry
 func NewRefEntry(c *cid.Cid, p int) *Entry {
 	return &Entry{
 		Cid:      c,
