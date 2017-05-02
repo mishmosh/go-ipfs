@@ -255,6 +255,7 @@ func (bs *Bitswap) GetBlocks(ctx context.Context, keys []*cid.Cid) (<-chan block
 					return
 				}
 
+				bs.CancelWants([]*cid.Cid{blk.Cid()}, mses)
 				remaining.Remove(blk.Cid())
 				select {
 				case out <- blk:
@@ -371,6 +372,7 @@ func (bs *Bitswap) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg
 
 			for _, ses := range bs.SessionsForBlock(k) {
 				ses.ReceiveBlock(p, b)
+				bs.CancelWants([]*cid.Cid{k}, ses.id)
 			}
 			log.Debugf("got block %s from %s", b, p)
 			if err := bs.HasBlock(b); err != nil {
