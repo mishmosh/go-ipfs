@@ -219,6 +219,11 @@ func (s *Session) fetch(ctx context.Context, keys []*cid.Cid) {
 	}
 }
 
+func (s *Session) Close() error {
+	// TODO:
+	return nil
+}
+
 // GetBlocks fetches a set of blocks within the context of this session and
 // returns a channel that found blocks will be returned on. No order is
 // guaranteed on the returned blocks.
